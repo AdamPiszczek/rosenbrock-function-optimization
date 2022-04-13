@@ -6,35 +6,35 @@ format long
 global coordX coordY iter
 iter = 0;
 
-% deklaracja wykresów
+% graph initialization
 figure(1)
 figure(2)
 
-% ==================== Wybranie punktu startowego ====================
-startingpoint = 4; % Wybierz punkt startowy z zakresu 1-4 zmieniając zmienną startingpoint
-X0 = [2 0.5; 1 -1.5; -1 -1.5; -1 0.5]; % punkty startowe
-x0 = [X0(startingpoint,1) X0(startingpoint,2)]; % wartość wektora punktu startowego
+% ==================== Select a starting point ====================
+startingpoint = 4; % Choose a starting point between 1-4 by changing the starting point variable
+X0 = [2 0.5; 1 -1.5; -1 -1.5; -1 0.5]; % starting points
+x0 = [X0(startingpoint,1) X0(startingpoint,2)]; % starting point vector value
 
-figure(1) %  wykres 2D konturowy funkcji z naniesionymi trajektoriam    i
+figure(1) %  2D contour plot of a function with marked trajectories
 hold on
 axis tight
 [X, Y] = meshgrid(-4:0.001:4,-4:0.001:4);
-Z = plotRosenbrock(X, Y); % obliczenie wartości funkcji Rosenbrock'a
+Z = plotRosenbrock(X, Y); % compute the contour value of the Rosenbrock function
 [M, c] = contourf(X,Y,log(Z),'ShowText','on');
-c.Fill = 0; % wyłączenie kolorów
-c.LineWidth = 0.33; % zmniejszenie rozmiaru linii dla lepszej widoczności
+c.Fill = 0; % exclusion of colors
+c.LineWidth = 0.33; % reduction of line size for better visibility
 
-% Jeżeli nie ma folderu na wykresy, stwórz go
-if ~exist("./wykresy", 'dir')
-       mkdir("./wykresy")
+% If there is no graphs folder, create one.
+if ~exist("./graphs", 'dir')
+       mkdir("./graphs")
 end
 
-% ==================== Wywołanie poszczególnych metod ====================
-% wybierz metode wpisując w miejsce zmiennej choice numer od 1 do 4, gdzie:
-% 1 - oznacza metodę Quasi-Newton
-% 2 - oznacza metodę Regionu Zaufania
-% 3 - oznacza metodę Regionu Zaufania z podanym hesjanem
-% 4 - oznacza metodę Neldera-Meada
+% ==================== Calling individual methods ====================
+% select a method by changing the value of the choice variable, where:
+% 1 - means the Quasi-Newton method
+% 2 - means the Region of Trust method without the given Hessian
+% 3 - means the Region of Trust method with the given Hessian
+% 4 - means the Nelder-Mead method
 
 choice = 4;
 
@@ -50,36 +50,36 @@ switch choice
 end
 
 
-% !!! aby funkcja zadziałała konieczna jest instalcja: Optimization Toolbox
-% źródło: https://www.google.com/search?q=Optimization+Toolbox&sourceid=chrome&ie=UTF-8
-function [x, value] = optimQuasiNewton(x0, startingpoint) % funkcja odpowiedzialna za optymalizacje rozważanej funkcji metodą Quasi-Newton
+% !!! before running the script, you must install: Optimization Toolbox
+% source: https://www.google.com/search?q=Optimization+Toolbox&sourceid=chrome&ie=UTF-8
+function [x, value] = optimQuasiNewton(x0, startingpoint) % the function responsible for the optimization of the unconsidered function by the Quasi-Newton method
     
     global coordX coordY iter
-    % ustawienie odpowiednich ustawień dla solvera
+    % setting the appropriate settings for the solver
     options = optimoptions(@fminunc,'OutputFcn',@outputQuasiNewton,'Display', ...
             'iter-detailed','Algorithm','quasi-newton','MaxIterations', 1000, 'StepTolerance', ...
             1e-12, 'FunctionTolerance', 1e-12);
-    [x, value] = fminunc(@rosenbrock, x0, options); % wywołanie solvera
+    [x, value] = fminunc(@rosenbrock, x0, options); % solver invocation
 
     function stop = outputQuasiNewton(x, optimValues, state)
-        stop = false; % ustawienie zmiennej stop odpowiedzialnej za działanie funkcji
-        if isequal(state,'init') % przygotowanie wykresów do zaznaczania kolejnych iteracji
+        stop = false; % setting the stop variable responsible for the operation of the function
+        if isequal(state,'init') % preparation of charts for marking subsequent iterations
             figure(1)
             hold on
-            title('Metoda Quasi-Newton')
+            title('Quasi-Newton method')
             xlim([-3 3])
             ylim([-3 3])
-            xlabel("wartość x")
-            ylabel("wartość y")
+            xlabel("x value")
+            ylabel("y value")
 
             figure(2)
             hold on
-            title('Metoda Quasi-Newton (wartości funkcji celu)');
-            xlabel("ilość iteracji [n]")
-            ylabel("wartość funkcji [log(y)]")
-            set(gca, 'YScale', 'log') % wyświetlenie osi Y w skali logarytmicznej
+            title('Quasi-Newton method (objective function values)');
+            xlabel("number of iterations [n]")
+            ylabel("function value [log(y)]")
+            set(gca, 'YScale', 'log') % displaying the Y axis on a logarithmic scale
 
-        elseif isequal(state,'iter') % aktualizacja wykresów w kolejnych iteracjach
+        elseif isequal(state,'iter') % updating the graph in subsequent iterations
             iter = iter + 1;
             figure(1)
             coordX(iter) = x(1);
@@ -87,55 +87,55 @@ function [x, value] = optimQuasiNewton(x0, startingpoint) % funkcja odpowiedzial
             figure(2)
             plot(optimValues.iteration, optimValues.fval, 'bx')
 
-        elseif isequal(state,'done') % obsługa końcowej iteracji funkcji
+        elseif isequal(state,'done') % support for the final iteration of a function
             figure(1)
             plot(coordX(1,1:iter), coordY(1,1:iter), 'ro-', 'MarkerSize', 4)
             xlim([min(coordX)-0.05 max(coordX)+0.05]);
             ylim([min(coordY)-0.05 max(coordY)+0.05]);
-            path = char("./wykresy/QuasiNewton1_" + startingpoint + ".png");
+            path = char("./graphs/QuasiNewton1_" + startingpoint + ".png");
             saveas(gcf,path);
-            fprintf('Wykres nr. 1 został zapisany\n')
+            fprintf('Grapgh no. 1 has been saved\n')
             hold off
             figure(2)
-            path = char("./wykresy/QuasiNewton2_" + startingpoint + ".png");
+            path = char("./graphs/QuasiNewton2_" + startingpoint + ".png");
             saveas(gcf,path);
-            fprintf('Wykres nr. 2 został zapisany\n')
+            fprintf('Grapgh no. 2 has been saved\n')
             hold off 
     
         end
     end
 end
 
-% !!! aby funkcja zadziałała konieczna jest instalacja: Optimization Toolbox
-% źródło: https://www.google.com/search?q=Optimization+Toolbox&sourceid=chrome&ie=UTF-8
-function [x, value] = optimTrustRegion(x0, startingpoint) % funkcja odpowiedzialna za optymalizacje rozważanej funkcji metodą Regionu Zaufania
+% !!! before running the script, you must install: Optimization Toolbox
+% source: https://www.google.com/search?q=Optimization+Toolbox&sourceid=chrome&ie=UTF-8
+function [x, value] = optimTrustRegion(x0, startingpoint) % the function responsible for the optimization of the unconsidered function by the Trust-Region method without the given Hessian
     
     global coordX coordY iter
-    % ustawienie odpowiednich ustawień dla solvera
+    % setting the appropriate settings for the solver
     options = optimoptions(@fminunc,'OutputFcn',@outputTrustRegion,'Display', ...
             'iter-detailed','Algorithm','trust-region', 'SpecifyObjectiveGradient',true, ...
             'MaxIterations', 1000, 'StepTolerance', 1e-12, 'FunctionTolerance', 1e-12);
-    [x, value] = fminunc(@rosenbrockwithgrad, x0, options); % wywołanie solvera
+    [x, value] = fminunc(@rosenbrockwithgrad, x0, options); % solver invocation
     
     function stop = outputTrustRegion(x, optimValues, state)
-        stop = false; % ustawienie zmiennej stop odpowiedzialnej za działanie funkcji
-        if isequal(state,'init') % przygotowanie wykresów do zaznaczania kolejnych iteracji
+        stop = false; % setting the stop variable responsible for the operation of the function
+        if isequal(state,'init') % preparation of charts for marking subsequent iterations
             figure(1)
             hold on
-            title('Metoda Regionu Zaufania bez podanego hesjanu')
+            title('Trust-Region method without the given Hessian')
             xlim([-3 3])
             ylim([-3 3])
-            xlabel("wartość x")
-            ylabel("wartość y")
+            xlabel("x value")
+            ylabel("y value")
 
             figure(2)
             hold on
-            title('Metoda Regionu Zaufania bez podanego hesjanu (wartości funkcji celu)');
-            xlabel("ilość iteracji [n]")
-            ylabel("wartość funkcji [log(y)]")
-            set(gca, 'YScale', 'log') % wyświetlenie osi Y w formie logarytmicznej
+            title('Trust-Region method without the given Hessian (objective function values)');
+            xlabel("number of iterations [n]")
+            ylabel("function value [log(y)]")
+            set(gca, 'YScale', 'log') % displaying the Y axis on a logarithmic scale
 
-        elseif isequal(state,'iter') % aktualizacja wykresów w kolejnych iteracjach
+        elseif isequal(state,'iter') % updating the graph in subsequent iterations
             iter = iter + 1;
             figure(1)
             coordX(iter) = x(1);
@@ -143,56 +143,56 @@ function [x, value] = optimTrustRegion(x0, startingpoint) % funkcja odpowiedzial
             figure(2)
             plot(optimValues.iteration, optimValues.fval, 'bx')
 
-        elseif isequal(state,'done') % obsługa końcowej iteracji funkcji
+        elseif isequal(state,'done') % support for the final iteration of a function
             fprintf('done \n')
             figure(1)
             plot(coordX(1,1:iter), coordY(1,1:iter), 'ro-', 'MarkerSize', 4)
             xlim([min(coordX)-0.05 max(coordX)+0.05]);
             ylim([min(coordY)-0.05 max(coordY)+0.05]);
-            path = "./wykresy/TrustRegion1_" + startingpoint + ".png";
+            path = "./graphs/TrustRegion1_" + startingpoint + ".png";
             saveas(gcf,path);
-            fprintf('Wykres nr. 1 został zapisany\n')
+            fprintf('Grapgh no. 1 has been saved\n')
             hold off
             figure(2)
-            path = "./wykresy/TrustRegion2_" + startingpoint + ".png";
+            path = "./graphs/TrustRegion2_" + startingpoint + ".png";
             saveas(gcf,path);
-            fprintf('Wykres nr. 2 został zapisany\n')
+            fprintf('Grapgh no. 2 has been saved\n')
             hold off 
             
         end
     end
 end
 
-% !!! aby funkcja zadziałała konieczna jest instalacja: Optimization Toolbox
-% źródło: https://www.google.com/search?q=Optimization+Toolbox&sourceid=chrome&ie=UTF-8
-function [x, value] = optimTrustRegionHessian(x0, startingpoint) % funkcja odpowiedzialna za optymalizacje rozważanej funkcji metodą Regionu Zaufania
+% !!! before running the script, you must install: Optimization Toolbox
+% source: https://www.google.com/search?q=Optimization+Toolbox&sourceid=chrome&ie=UTF-8
+function [x, value] = optimTrustRegionHessian(x0, startingpoint) % function responsible for optimizing the considered function using the Trust-Region method with the given Hessiann
     
     global coordX coordY iter
-    % ustawienie odpowiednich ustawień dla solvera
+    % setting the appropriate settings for the solver
     options = optimoptions(@fminunc,'OutputFcn',@outputTrustRegionHessian,'Display', ...
             'iter-detailed','Algorithm','trust-region', 'SpecifyObjectiveGradient',true, ...
             'MaxIterations', 1000, 'StepTolerance', 1e-12, 'FunctionTolerance', 1e-12, 'HessianFcn', 'objective');
-    [x, value] = fminunc(@rosenbrockwithhes, x0, options); % wywołanie solvera
+    [x, value] = fminunc(@rosenbrockwithhes, x0, options); % solver invocation
     
     function stop = outputTrustRegionHessian(x, optimValues, state)
-        stop = false; % ustawienie zmiennej stop odpowiedzialnej za działanie funkcji
-        if isequal(state,'init') % przygotowanie wykresów do zaznaczania kolejnych iteracji
+        stop = false; % setting the stop variable responsible for the operation of the function
+        if isequal(state,'init') % preparation of charts for marking subsequent iterations
             figure(1)
             hold on
-            title('Metoda Regionu Zaufania z podanym hesjanem')
+            title('Trust-Region method with the given Hessiann')
             xlim([-3 3])
             ylim([-3 3])
-            xlabel("wartość x")
-            ylabel("wartość y")
+            xlabel("x value")
+            ylabel("y value")
 
             figure(2)
             hold on
-            title('Metoda Regionu Zaufania z podanym hesjanem (wartości funkcji celu)');
-            xlabel("ilość iteracji [n]")
-            ylabel("wartość funkcji [log(y)]")
-            set(gca, 'YScale', 'log') % wyświetlenie osi Y w formie logarytmicznej
+            title('Trust-Region method with the given Hessiann (objective function values)');
+            xlabel("number of iterations [n]")
+            ylabel("function value [log(y)]")
+            set(gca, 'YScale', 'log') % displaying the Y axis on a logarithmic scale
 
-        elseif isequal(state,'iter') % aktualizacja wykresów w kolejnych iteracjach
+        elseif isequal(state,'iter') % updating the graph in subsequent iterations
             iter = iter + 1;
             figure(1)
             coordX(iter) = x(1);
@@ -200,53 +200,52 @@ function [x, value] = optimTrustRegionHessian(x0, startingpoint) % funkcja odpow
             figure(2)
             plot(optimValues.iteration, optimValues.fval, 'bx')
 
-        elseif isequal(state,'done') % obsługa końcowej iteracji funkcji
+        elseif isequal(state,'done') % support for the final iteration of a function
             fprintf('done \n')
             figure(1)
             plot(coordX(1,1:iter), coordY(1,1:iter), 'ro-', 'MarkerSize', 4)
             xlim([min(coordX)-0.05 max(coordX)+0.05]);
             ylim([min(coordY)-0.05 max(coordY)+0.05]);
-            path = "./wykresy/TrustRegionHessian1_" + startingpoint + ".png";
+            path = "./graphs/TrustRegionHessian1_" + startingpoint + ".png";
             saveas(gcf,path);
-            fprintf('Wykres nr. 1 został zapisany\n')
+            fprintf('Grapgh no. 1 has been saved\n')
             hold off
             figure(2)
-            path = "./wykresy/TrustRegionHessian2_" + startingpoint + ".png";
+            path = "./graphs/TrustRegionHessian2_" + startingpoint + ".png";
             saveas(gcf,path);
-            fprintf('Wykres nr. 2 został zapisany\n')
+            fprintf('Grapgh no. 2 has been saved\n')
             hold off 
         end
     end
 end
 
-
-function [x, value] = optimSimplex(x0, startingpoint) % funkcja odpowiedzialna za optymalizacje rozważanej funkcji metodą Neldera-Meada
+function [x, value] = optimSimplex(x0, startingpoint) % the function responsible for the optimization of the considered function by the Nelder-Mead method
     
     global coordX coordY iter
     
     options = optimset('OutputFcn', @outputSimplex,...
             'MaxFunEvals', 1000, 'TolX', 1e-12, 'TolFun', 1e-12);
-    [x, value, exitflag, output] = fminsearch(@rosenbrock, x0, options); % wywołanie solvera
+    [x, value, exitflag, output] = fminsearch(@rosenbrock, x0, options); % solver invocation
     
     function stop = outputSimplex(x, optimValues, state)
-        stop = false; % ustawienie zmiennej stop odpowiedzialnej za działanie funkcji
-        if isequal(state,'init') % przygotowanie wykresów do zaznaczania kolejnych iteracji
+        stop = false; % setting the stop variable responsible for the operation of the function
+        if isequal(state,'init') % preparation of charts for marking subsequent iterations
             figure(1)
             hold on
-            title('Metoda Neldera-Meada')
+            title('Nelder-Mead method')
             xlim([-3 3])
             ylim([-3 3])
-            xlabel("wartość x")
-            ylabel("wartość y")
+            xlabel("x value")
+            ylabel("y value")
 
             figure(2)
             hold on
-            title('Metoda Neldera-Meada (wartości funkcji celu)');
-            xlabel("ilość iteracji [n]")
-            ylabel("wartość funkcji [log(y)]")
-            set(gca, 'YScale', 'log') % wyświetlenie osi Y w formie logarytmicznej
+            title('Nelder-Mead method (objective function values)');
+            xlabel("number of iterations [n]")
+            ylabel("function value [log(y)]")
+            set(gca, 'YScale', 'log') % displaying the Y axis on a logarithmic scale
 
-        elseif isequal(state,'iter') % aktualizacja wykresów w kolejnych iteracjach
+        elseif isequal(state,'iter') % updating the graph in subsequent iterations
             iter = iter + 1;
             figure(1)
             coordX(iter) = x(1);
@@ -254,20 +253,20 @@ function [x, value] = optimSimplex(x0, startingpoint) % funkcja odpowiedzialna z
             figure(2)
             plot(optimValues.iteration, optimValues.fval, 'bx')
 
-        elseif isequal(state,'done') % obsługa końcowej iteracji funkcji
+        elseif isequal(state,'done') % support for the final iteration of a function
             fprintf('done \n')
             figure(1)
             plot(coordX(1,1:iter), coordY(1,1:iter), 'ro-', 'MarkerSize', 4)
             xlim([min(coordX)-0.05 max(coordX)+0.05]);
             ylim([min(coordY)-0.05 max(coordY)+0.05]);
-            path = "./wykresy/Nelder-Mead1_" + startingpoint + ".png";
+            path = "./graphs/Nelder-Mead1_" + startingpoint + ".png";
             saveas(gcf,path);
-            fprintf('Wykres nr. 1 został zapisany\n')
+            fprintf('Grapgh no. 1 has been saved\n')
             hold off
             figure(2)
-            path = "./wykresy/Nelder-Mead2_" + startingpoint + ".png";
+            path = "./graphs/Nelder-Mead2_" + startingpoint + ".png";
             saveas(gcf,path);
-            fprintf('Wykres nr. 2 został zapisany\n')
+            fprintf('Grapgh no. 2 has been saved\n')
             hold off 
             
         end
@@ -276,27 +275,27 @@ function [x, value] = optimSimplex(x0, startingpoint) % funkcja odpowiedzialna z
 end
 
 
-% Wartości stałych a = 0 i b = -0.5, dla funkcji Rosenbrock'a („bananowej"):
+% The values of the constants a = 0 and b = -0.5 for the Rosenbrock ("banana") function:
 % f(x) = (1-x+a)^2 + 100[y-b-(x-a)^2]^2
 
-function f = plotRosenbrock(x, y) % funkcja potrzebna do stworzenia wykresu funkcji Rosenbrock'a
+function f = plotRosenbrock(x, y) % function required to plot the Rosenbrock function
     f = (1-x).^2 + 100 * (y + 0.5 - x.^2).^2;
 end
 
-function f = rosenbrock(x) % właściwa funkcja użyta do optymalizacji funkcji Rosenbrock'a
+function f = rosenbrock(x) % proper function used to optimize Rosenbrock function
     f = (1-x(1)).^2 + 100 * (x(2) + 0.5 - x(1).^2).^2;
 end
 
-function [f,g] = rosenbrockwithgrad(x) % właściwa funkcja użyta do optymalizacji funkcji Rosenbrock'a ze zdefiniowanym gradientem
+function [f,g] = rosenbrockwithgrad(x) % correct function used to optimize Rosenbrock functions with defined gradient
     f = (1-x(1)).^2 + 100 * (x(2) + 0.5 - x(1).^2).^2;
 
-    if nargout > 1 % Jeżeli jest więcej niż jeden argument, który zwraca funkcja
-        g = [400*((-x(2)-0.495)*x(1)+x(1).^3-0.005); % obliczony gradient, według wzoru: https://wikimedia.org/api/rest_v1/media/math/render/svg/d632a346cd0677aef80d9fa32f476a5b5bf4dc58
+    if nargout > 1 % if there is more than one argument that the function returns
+        g = [400*((-x(2)-0.495)*x(1)+x(1).^3-0.005); % gradient calculated, according to the formula: https://wikimedia.org/api/rest_v1/media/math/render/svg/d632a346cd0677aef80d9fa32f476a5b5bf4dc58
         200*(x(2)-x(1).^2+0.5)];
     end
 end
 
-function [f, g, H] = rosenbrockwithhes(x) % funkcja użyta do optymalizacji funkcji Rosenbrock'a ze zdefiniowanym gradientem i podanym hesjanem
+function [f, g, H] = rosenbrockwithhes(x) % function used to optimize a Rosenbrock function with a defined gradient and given hesian
     f = (1 - x(1)).^2 + 100 * (x(2) + 0.5 - x(1).^2).^2;
 
     if nargout > 1
