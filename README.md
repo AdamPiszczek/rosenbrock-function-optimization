@@ -1,6 +1,6 @@
 # Authors
 - [Adam Piszczek](https://github.com/Adam1904)
-- [Wiktoria Zych](x)
+- [Wiktoria Zych](https://github.com/polarrev)
 
 # Rosenbrock function optimization
 Rosenbrock function optimization with four different methods (unconstrained optimization). What is noticeable in the figure below, it is a convex function with a hard-to-find minimum.
