@@ -1,5 +1,5 @@
 # Authors
-- [Adam Piszczek](https://github.com/Adam1904)
+- [Adam Piszczek](https://github.com/AdamPiszczek)
 - [Wiktoria Zych](https://github.com/polarrev)
 
 # Rosenbrock function optimization
